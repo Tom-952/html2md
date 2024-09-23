@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  html2md:
+    image: node:14.18.0
+    container_name: html2md
+#    restart: always
+    ports:
+      - "38080:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - LANG=en_US.utf8
+    command: /bin/bash  -c "npm i --registry=https://registry.npmmirror.com  &&  npm run build && npm run start "
+
+    volumes:
+      - ./html2md:/opt/html2md
+    working_dir: /opt/html2md
+
