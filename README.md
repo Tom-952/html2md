@@ -1,3 +1,14 @@
+# html2md
+
+## 修改记录
+
+- 修改端口为8080，且不强制绑定host地址（这样部署后任何ip都可以访问）
+- 在原来的/getUrlHtml接口上，同步返回md字段，标识markmdown内容（这样访问api就可以获取到markdown内容了）
+
+---
+
+如下是原仓库的内容。
+
 <h1 align="center">🎉 Html2md 🥳</h1>
 
 <div >

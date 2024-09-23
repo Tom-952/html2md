@@ -10,6 +10,9 @@ const { JSDOM } = jsdom
 const { Nuxt, Builder } = require('nuxt')
 const app = express()
 
+var TurndownService = require('turndown')
+var turndownPluginGfm = require('turndown-plugin-gfm')
+
 const isDev = process.env.ENV === 'dev'
 const isBuild = process.env.ACTION === 'build'
 
@@ -164,7 +167,28 @@ const html2md = {
     }
 
     return content
-  }
+  },
+  html2mdFun (str) {
+    const turndownService = new TurndownService({ codeBlockStyle: 'fenced' })
+    // Use the gfm plugin
+    turndownService.use(turndownPluginGfm.gfm)
+
+    // Use the table and strikethrough plugins only
+    turndownService.use([turndownPluginGfm.tables, turndownPluginGfm.strikethrough])
+    // 自定义配置
+    turndownService.addRule('pre2Code', {
+      filter: ['pre'],
+      replacement (content) {
+        const len = content.length
+        // 除了pre标签，里面是否还有code标签包裹，有的话去掉首尾的`（针对微信文章）
+        const isCode = content[0] === '`' && content[len - 1] === '`'
+        const result = isCode ? content.substr(1, len - 2) : content
+        return '```\n' + result + '\n```\n'
+      }
+    })
+    const markdown = turndownService.turndown(str)
+    return markdown
+  },
 }
 
 // 需要模拟请求头的网站
@@ -190,10 +214,12 @@ app.all('/getUrlHtml', function (req, res, next) {
     }
     res.type('text/json')
     try {
+      const htmlStr = html2md.getBody(body)
       const json = {
         code: 1,
         title: html2md.getTitle(body),
-        html: html2md.getBody(body)
+        html: htmlStr,
+        md: html2md.html2mdFun(htmlStr)
       }
       res.status(200).send(json)
     } catch (error) {
@@ -278,7 +304,7 @@ async function start () {
   app.use(nuxt.render)
 
   // Listen the server
-  app.listen(port, host)
+  app.listen(port)
 
   // 拦截“未捕获的异常”
   process.on('uncaughtException', function (err) {
@@ -286,7 +312,7 @@ async function start () {
   })
 
   consola.ready({
-    message: `Server listening on http://${host}:${port}`,
+    message: `Server listening on http://0.0.0.0:${port}`,
     badge: true
   })
 }
